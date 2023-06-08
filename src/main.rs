@@ -1,6 +1,5 @@
-
 #[tokio::main]
-async fn  main() {
+async fn main() {
     //https://read.amazon.co.jp/notebook をスクレイピング
     let url = "https://read.amazon.co.jp/notebook";
     let mut res = reqwest::get(url).await.unwrap();
