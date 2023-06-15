@@ -1,24 +1,40 @@
+use dotenvy::dotenv;
+use std::env;
+use std::io::BufRead;
+use thirtyfour::prelude::*;
+
 #[tokio::main]
-async fn main() {
-    //https://read.amazon.co.jp/notebook をスクレイピング
-    let url = "https://read.amazon.co.jp/notebook";
-    let mut res = reqwest::get(url).await.unwrap();
-    assert!(res.status().is_success());
-    // すべての本のurlを取得
-    // id=libraryの中のclass=kp-notebook-library-each-bookのidを取得
-    // for node in document.find(Attr("id", "library").descendant(Class("kp-notebook-library-each-book"))) {
-    //     println!("node = {:?}", node);
-    //     // 本のurlを取得
-    //     let mut url = node.find(Name("a")).next().unwrap();
-    //     println!("url = {:?}", url);
-    //     // 本のタイトルを取得
-    //     let mut title = node.find(Class("kp-notebook-library-each-book-title")).next().unwrap();
-    //     println!("title = {:?}", title);
-    //     // 本の著者を取得
-    //     let mut author = node.find(Class("kp-notebook-library-each-book-author")).next().unwrap();
-    //     println!("author = {:?}", author);
-    //     // 本の画像を取得
-    //     let mut image = node.find(Class("kp-notebook-library-each-book-image")).next().unwrap();
-    //     println!("image = {:?}", image);
-    // }
+async fn main() -> WebDriverResult<()> {
+    // 環境変数からKINDLE_HIGHLIGHTS_URLを取得
+    dotenv().expect("Failed to read .env file");
+    let kindle_highlights_url = env::var("KINDLE_HIGHLIGHTS_URL").unwrap();
+    let web_driver_url = env::var("WEB_DRIVER_URL").unwrap();
+
+    let caps = DesiredCapabilities::chrome();
+    let driver = WebDriver::new(&web_driver_url, caps).await?;
+    driver.goto(kindle_highlights_url).await?;
+
+    let elem_form = driver.find(By::Css("form")).await?;
+    let elem_email = elem_form.find(By::Css("input[type=email]")).await?;
+    let elem_password = elem_form.find(By::Css("input[type=password]")).await?;
+    let elem_submit = elem_form.find(By::Css("input[type=submit]")).await?;
+
+    let stdin = std::io::stdin();
+    let mut lines = stdin.lock().lines();
+
+    print!("Enter your email:");
+    let email = lines.next().unwrap().unwrap();
+    print!("Enter your password:");
+    let password = lines.next().unwrap().unwrap();
+
+    elem_email.send_keys(email).await?;
+    elem_password.send_keys(password).await?;
+    elem_submit.click().await?;
+
+    let elem_highlighted = driver.find(By::Css(".highlighted")).await?;
+    let text = elem_highlighted.text().await?;
+    println!("{}", text);
+
+    elem_highlighted.click().await?;
+    Ok(())
 }
