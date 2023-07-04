@@ -5,7 +5,6 @@ use thirtyfour::prelude::*;
 
 #[tokio::main]
 async fn main() -> WebDriverResult<()> {
-    // 環境変数からKINDLE_HIGHLIGHTS_URLを取得
     dotenv().expect("Failed to read .env file");
     let kindle_highlights_url = env::var("KINDLE_HIGHLIGHTS_URL").unwrap();
     let web_driver_url = env::var("WEB_DRIVER_URL").unwrap();
@@ -36,5 +35,6 @@ async fn main() -> WebDriverResult<()> {
     println!("{}", text);
 
     elem_highlighted.click().await?;
+    driver.quit().await?;
     Ok(())
 }
